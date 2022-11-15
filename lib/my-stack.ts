@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as cdk from 'aws-cdk-lib';
 import { Duration, RemovalPolicy } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { Bucket, BucketEncryption, EventType } from 'aws-cdk-lib/aws-s3';
+import { Bucket, EventType } from 'aws-cdk-lib/aws-s3';
 import { Queue } from 'aws-cdk-lib/aws-sqs';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Runtime } from 'aws-cdk-lib/aws-lambda';
@@ -14,7 +14,7 @@ export class MyStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const queue = new Queue(this, 'CdkAssertionsQueue', {
+    const queue = new Queue(this, 'MyQueue', {
       visibilityTimeout: Duration.seconds(300)
     });
     

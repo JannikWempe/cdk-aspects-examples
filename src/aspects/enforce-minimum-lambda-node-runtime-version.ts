@@ -28,6 +28,7 @@ export class EnforceMinimumLambdaNodeRuntimeVersion implements IAspect {
       if (actualNodeJsRuntimeVersion < minimumNodeJsRuntimeVersion) {
         Annotations
           .of(node)
+          // .addDeprecation('Lambda Runtime', `Node.js runtime version ${node.runtime} is less than the minimum version ${this.#minimumNodeRuntimeVersion.name}.`)
           .addError(`Node.js runtime version ${node.runtime} is less than the minimum version ${this.#minimumNodeRuntimeVersion.name}.`);
       }
     }

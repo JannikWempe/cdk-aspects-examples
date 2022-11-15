@@ -1,10 +1,4 @@
-Bundling asset MyStack/MyLambda1/Code/Stage...
-
-  ...8f5bbb8edcb83d4a036636852c01c1ff72fea565bab2b188be482fc1b/index.js  1.1kb
-
-⚡ Done in 17ms
-${Token[TOKEN.252]}
-${Token[TOKEN.301]}
+Enabling bucket versioning for MyStack/MyBucket/Resource
 Resources:
   CdkAssertionsQueue916F886A:
     Type: AWS::SQS::Queue
@@ -43,10 +37,61 @@ Resources:
       aws:cdk:path: MyStack/CdkAssertionsQueue/Policy/Resource
   MyBucketF68F3FF0:
     Type: AWS::S3::Bucket
-    UpdateReplacePolicy: Retain
-    DeletionPolicy: Retain
+    Properties:
+      Tags:
+        - Key: aws-cdk:auto-delete-objects
+          Value: "true"
+      VersioningConfiguration:
+        Status: Enabled
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
     Metadata:
       aws:cdk:path: MyStack/MyBucket/Resource
+  MyBucketPolicyE7FBAC7B:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket:
+        Ref: MyBucketF68F3FF0
+      PolicyDocument:
+        Statement:
+          - Action:
+              - s3:DeleteObject*
+              - s3:GetBucket*
+              - s3:List*
+            Effect: Allow
+            Principal:
+              AWS:
+                Fn::GetAtt:
+                  - CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092
+                  - Arn
+            Resource:
+              - Fn::GetAtt:
+                  - MyBucketF68F3FF0
+                  - Arn
+              - Fn::Join:
+                  - ""
+                  - - Fn::GetAtt:
+                        - MyBucketF68F3FF0
+                        - Arn
+                    - /*
+        Version: "2012-10-17"
+    Metadata:
+      aws:cdk:path: MyStack/MyBucket/Policy/Resource
+  MyBucketAutoDeleteObjectsCustomResource2C28D565:
+    Type: Custom::S3AutoDeleteObjects
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+          - CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F
+          - Arn
+      BucketName:
+        Ref: MyBucketF68F3FF0
+    DependsOn:
+      - MyBucketPolicyE7FBAC7B
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: MyStack/MyBucket/AutoDeleteObjectsCustomResource/Default
   MyBucketNotifications46AC0CD2:
     Type: Custom::S3BucketNotifications
     Properties:
@@ -70,6 +115,47 @@ Resources:
       - CdkAssertionsQueue916F886A
     Metadata:
       aws:cdk:path: MyStack/MyBucket/Notifications/Resource
+  CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+      ManagedPolicyArns:
+        - Fn::Sub: arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    Metadata:
+      aws:cdk:path: MyStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Role
+  CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket:
+          Fn::Sub: cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}
+        S3Key: 3f51abb709b8e65167a45aeed02bab11540603d909005d7148230ba5ce6c74d7.zip
+      Timeout: 900
+      MemorySize: 128
+      Handler: __entrypoint__.handler
+      Role:
+        Fn::GetAtt:
+          - CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092
+          - Arn
+      Runtime: nodejs14.x
+      Description:
+        Fn::Join:
+          - ""
+          - - "Lambda function for auto-deleting objects in "
+            - Ref: MyBucketF68F3FF0
+            - " S3 bucket."
+    DependsOn:
+      - CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092
+    Metadata:
+      aws:cdk:path: MyStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler
+      aws:asset:path: asset.3f51abb709b8e65167a45aeed02bab11540603d909005d7148230ba5ce6c74d7
+      aws:asset:property: Code
   MyLambda1ServiceRole69A7E1EA:
     Type: AWS::IAM::Role
     Properties:
@@ -125,7 +211,7 @@ Resources:
         Variables:
           AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
       Handler: index.handler
-      Runtime: nodejs12.x
+      Runtime: nodejs16.x
     DependsOn:
       - MyLambda1ServiceRoleDefaultPolicy22E2F802
       - MyLambda1ServiceRole69A7E1EA
@@ -134,18 +220,6 @@ Resources:
       aws:asset:path: asset.1e05fb4d64315ee8a8bb1bdc4b6409139882f655cd4a514fdd67a49a2ea037fa
       aws:asset:is-bundled: true
       aws:asset:property: Code
-  MyLambda1LogGroup99921BB0:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: /aws/lambda/
-      RetentionInDays: 1
-    DependsOn:
-      - MyLambda1ServiceRoleDefaultPolicy22E2F802
-      - MyLambda1ServiceRole69A7E1EA
-    UpdateReplacePolicy: Retain
-    DeletionPolicy: Retain
-    Metadata:
-      aws:cdk:path: MyStack/MyLambda1/Resource/LogGroup/Resource
   MyLambda1SqsEventSourceMyStackCdkAssertionsQueue5124602F7DBE4F63:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
@@ -340,7 +414,7 @@ Resources:
         Variables:
           AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1"
       Handler: index.handler
-      Runtime: nodejs12.x
+      Runtime: nodejs16.x
     DependsOn:
       - MyLambda2ServiceRoleD09B370C
     Metadata:
@@ -348,21 +422,10 @@ Resources:
       aws:asset:path: asset.1e05fb4d64315ee8a8bb1bdc4b6409139882f655cd4a514fdd67a49a2ea037fa
       aws:asset:is-bundled: true
       aws:asset:property: Code
-  MyLambda2LogGroup75711480:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: /aws/lambda/
-      RetentionInDays: 1
-    DependsOn:
-      - MyLambda2ServiceRoleD09B370C
-    UpdateReplacePolicy: Retain
-    DeletionPolicy: Retain
-    Metadata:
-      aws:cdk:path: MyStack/MyLambda2/Resource/LogGroup/Resource
   CDKMetadata:
     Type: AWS::CDK::Metadata
     Properties:
-      Analytics: v2:deflate64:H4sIAAAAAAAA/2VQy1LDMAz8Fu6OINBypx3gAkwfH5BxHZFRHnaI7DKMx/+O7YT2wMW7Xsu7ku5hVcLdjfzmQtVd0dMJ/NFK1YkoVZ6/GPzeoUOx/dQzyefO9KR+LuJ8DYIfwG+c6tCmp4XNsJGMQfRyONWy0qbGluEjw4vTypLRguQA/mD6HJbxGnNNqCQzWoanBIsh+Fhy8Xk+o7ZH4yaF73IcSTfJ4b8a2zFNHPDNNK+TcWOq+uMh5CaQ8weRw+JimsVsa3RNKSyINAu0fHsuH6Fcx2W2TFRMTlsaEA4z/gIo0ynbaAEAAA==
+      Analytics: v2:deflate64:H4sIAAAAAAAA/2VQy27DIBD8lt7xNmmU3hurubVKnA+wCGwj/IDUC64qxL/XgGUr6oXZmWVnYF9gv4HNE/+hQsi26NQV/MVy0bJJqj19E/izQ4es/NK5SOfJdEr8LmKmgdEO/MGJFm1szVWGdeKBZ3LghIF1vL9KXmsjsSH4THB0WlhlNFO8B1+ZLr0k4eq4xtecCC3BW4TZEPx0ZfF5H1Hbi3GDwA9+vyt9iw7/1RBY6ciavkJKespd6ofWaTCjkjiwFDvt7zbblkZLFWMDi7+Chp7H7Sts99POG1KqGJy2qkeoMv4BnFg6X48BAAA=
     Metadata:
       aws:cdk:path: MyStack/CDKMetadata/Default
     Condition: CDKMetadataAvailable
@@ -457,17 +520,3 @@ Rules:
                 - Ref: BootstrapVersion
         AssertDescription: CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.
 
-
-NOTICES
-
-21902	apigateway: Unable to serialize value as aws-cdk-lib.aws_apigateway.IModel
-
-	Overview: Users of CDK in any language other than TS/JS cannot use
-	          values that return an instance of a deprecated class.
-
-	Affected versions: framework: >=2.41.0 <=2.43.0
-
-	More information at: https://github.com/aws/aws-cdk/issues/21902
-
-
-If you don’t want to see a notice anymore, use "cdk acknowledge <id>". For example, "cdk acknowledge 21902".

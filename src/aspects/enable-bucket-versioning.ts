@@ -6,6 +6,7 @@ export class EnableBucketVersioning implements IAspect {
   
   visit(node: IConstruct): void {
     if (node instanceof CfnBucket) {
+      console.log(`Enabling bucket versioning for ${node.node.path}`);
       node.versioningConfiguration = {
         status: 'Enabled',
       };

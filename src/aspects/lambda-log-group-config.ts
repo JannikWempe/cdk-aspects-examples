@@ -4,8 +4,6 @@ import { LogGroup, LogGroupProps } from 'aws-cdk-lib/aws-logs';
 
 import { IConstruct } from 'constructs';
 
-let i = 0;
-
 /**
  * Configures the log group for all Lambda functions.
  */
@@ -16,17 +14,20 @@ export class LambdaLogGroupConfig implements IAspect {
     this.#logGroupProps = logGroupProps;
   }
 
-  visit(construct: IConstruct): void {
-    if (construct instanceof CfnFunction) {
-      this.createLambdaLogGroup(construct);
+  visit(node: IConstruct): void {
+    if (node instanceof CfnFunction) {
+    console.log(`Adding log group for Lambda function ${node.node.path}`);
+
+      this.createLambdaLogGroup(node);
     }
   }
 
   private createLambdaLogGroup(lambda: CfnFunction) {
+    console.log(`Lambda functionName: ${lambda.functionName}`);
+    
     new LogGroup(lambda, `LogGroup`, {
       ...this.#logGroupProps,
       logGroupName: `/aws/lambda/${lambda.ref}`,
     });
-    i++;
   }
 }
